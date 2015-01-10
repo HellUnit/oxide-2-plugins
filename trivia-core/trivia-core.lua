@@ -14,6 +14,7 @@ local totalNumberOfQuestions = 0
 local totalNumberOfCategories = 0
 
 function PLUGIN:Init()
+	-- Load the default config and set the commands
 	self:LoadDefaultConfig()
 	command.AddChatCommand("trivia", self.Object, "cmdToggleTrivia")
 	command.AddChatCommand("answer", self.Object, "cmdAnswerQuestion")
@@ -21,11 +22,15 @@ function PLUGIN:Init()
 end
 
 function PLUGIN:OnServerInitialized()
+	-- Get a list of all loaded plugins
 	local pluginsList = plugins.GetAll()
+	-- DEBUG: List the number of loaded plugins
 	print("Number of plugins: ".. tostring(pluginsList.Length))
+	-- DEBUG: Print the names of all loaded plugins
 	for i = 0, tonumber(pluginsList.Length) - 1 do
 		print(tostring(pluginsList[i].Object.Title))
 	end
+	-- Load the questions from the trivia extension plugins
 	TriviaQuestions = {}
 	for i = 0, tonumber(pluginsList.Length) - 1 do
 		if pluginsList[i].Object.Title:match("Trivia Questions") then  
@@ -34,11 +39,14 @@ function PLUGIN:OnServerInitialized()
 			TriviaQuestions[category] = { Questions, Answers }
 		end
 	end
+	-- DEBUG: Print all category names
 	for k, v in pairs(TriviaQuestions) do
 		totalNumberOfCategories = totalNumberOfCategories + 1
 		print("Category: " .. tostring(k))
 	end
+	-- DEBUG: Print the total number of categories
 	print("Total number of categories: " .. tostring(totalNumberOfCategories))
+	-- DEBUG: Print the questions/answers in each category
 	for k, v in pairs(TriviaQuestions) do
 		print("Category: " .. tostring(k))
 		for k, v in pairs(v) do
@@ -60,6 +68,7 @@ function PLUGIN:OnServerInitialized()
 	end
 end
 
+-- Quotesafe function to help prevent unexpected output
 local function QuoteSafe(string)
 	return UnityEngine.StringExtensions.QuoteSafe(string)
 end
@@ -67,14 +76,36 @@ end
 function PLUGIN:LoadDefaultConfig()
 	-- Set/load the default config options
 	self.Config.Settings = self.Config.Settings or {
+		-- How often are the questions asked
 		interval = "60",
+		-- Enable or disable the plugin
 		enabled = "false",
+		-- Whether or not the same question is repeated if
+		-- not answered correctly
 		doesQuestionRepeat = "true",
+		-- How many times a certain question will be repeated
 		questionRepeats = "3",
+		-- Name to be used in plugin broadcasts
 		ChatName = "TRIVIA",
-		ToggleAuthLevel = "1"
+		-- Auth level required to enable/disable plugin
+		-- 1 = Moderator
+		-- 2 = Owner
+		ToggleAuthLevel = "1",
+		-- Enable/disable use of the Jeopardy web API
+		EnableJeopardyAPI = "true",
+		-- Enable disable the use of a point system to
+		-- determine "round" winner.
+		EnablePointSystem = "true",
+		-- Enable/disable the economy API for rewarding
+		-- correct answers
+		EnableEconomyAPI = "true",
+		-- Enable/disable the item reward system
+		EnableRewards = "true"
 	}
 	self.Config.Rewards = self.Config.Rewards or {
+		-- Item Reward System configuration. Probably needs
+		-- to be changed to a table to allow for multiple
+		-- rewards
 		Item = "Cooked Human Meat",
 		Amount = 1
 	}
@@ -82,8 +113,9 @@ function PLUGIN:LoadDefaultConfig()
 end
 
 function PLUGIN:AskQuestion()
-	-- Check if the question is answered or if question repeating is enabled.
-	-- If it has been answered or question repeating is disabled, ask a new question
+	-- Check if the question is answered or if question
+	-- repeating is enabled. If it has been answered or
+	-- question repeating is disabled, ask a new question
 	if answered == "true" or self.Config.Settings.doesQuestionRepeat == "false" then
 		previousQuestionNumber = questionNumber
 		-- Make sure that the same question is not asked again
@@ -95,9 +127,11 @@ function PLUGIN:AskQuestion()
 		currentAnswer = self.Config.Answers[tostring(questionNumber)]
 		-- Broadcast the question
 		global.ConsoleSystem.Broadcast("chat.add \"" .. self.Config.Settings.ChatName .. "\" \"" .. self.Config.Questions[tostring(questionNumber)] .. "\"")
-	-- If the question has not been answered and repeating is enabled, ask the same question again
+	-- If the question has not been answered and repeating
+	-- is enabled, ask the same question again
 	elseif answered ~= "true" and self.Config.Settings.doesQuestionRepeat == "true" then
-		-- If the question has been repeated less than the configured number of times, ask it again.
+		-- If the question has been repeated less than the
+		-- configured number of times, ask it again.
 		-- Otherwise, ask a new question
 		if repeats <= self.Config.Settings.questionRepeats then
 			global.ConsoleSystem.Broadcast("chat.add \"" .. self.Config.Settings.ChatName .. "\" \"" .. self.Config.Questions[tostring(questionNumber)] .. "\"")
@@ -108,14 +142,17 @@ function PLUGIN:AskQuestion()
 end
 
 function PLUGIN:cmdAnswerQuestion(player, cmd, args)
-	-- Parse args for the answer, if correct, set answered to true and reward the player
+	-- Parse args for the answer, if correct, set answered
+	-- to true and reward the player
 end
 
 function PLUGIN:cmdToggleTrivia(player, cmd, args)
-	-- Check player auth level and disable the plugin and destroy the timer
+	-- Check player auth level, disable the plugin, and
+	-- destroy the timer
 end
 
 function PLUGIN:cmdCategories(player, cmd, args)
+	-- List the available categories in a global broadcast
 	for k, v in pairs(TriviaQuestions) do
 		global.ConsoleSystem.Broadcast("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(tostring(k)))
 	end
