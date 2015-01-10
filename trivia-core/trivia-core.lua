@@ -61,7 +61,7 @@ function PLUGIN:OnServerInitialized()
 end
 
 local function QuoteSafe(string)
-    return UnityEngine.StringExtensions.QuoteSafe(string)
+	return UnityEngine.StringExtensions.QuoteSafe(string)
 end
 
 function PLUGIN:LoadDefaultConfig()
