@@ -67,10 +67,10 @@ function PLUGIN:cmdSetAmount(player, cmd, args)
 		if args then
 			if cmd == "setforwood" then
 				self.Config.Settings.WoodAmount = tostring(args[0])
-				player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.WoodAmountChanged .. tostring[args[0]]))
+				player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.WoodAmountChanged .. tostring(args[0])))
 			else
 				self.Config.Settings.OreAmount = tostring(args[0])
-				player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.OreAmountChanged .. tostring[args[0]]))
+				player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.OreAmountChanged .. tostring(args[0])))
 			end
 		end
 	else
