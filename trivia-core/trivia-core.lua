@@ -13,10 +13,15 @@ local repeats = nil
 local totalNumberOfQuestions = 0
 local totalNumberOfCategories = 0
 
+-- Quotesafe function to help prevent unexpected output
+local function QuoteSafe(string)
+	return UnityEngine.StringExtensions.QuoteSafe(string)
+end
+
 function PLUGIN:Init()
 	-- Load the default config and set the commands
 	self:LoadDefaultConfig()
-	command.AddChatCommand("trivia", self.Object, "cmdToggleTrivia")
+	command.AddChatCommand("triviatoggle", self.Object, "cmdToggleTrivia")
 	command.AddChatCommand("answer", self.Object, "cmdAnswerQuestion")
 	command.AddChatCommand("triviacategories", self.Object, "cmdCategories")
 end
@@ -68,11 +73,6 @@ function PLUGIN:OnServerInitialized()
 	end
 end
 
--- Quotesafe function to help prevent unexpected output
-local function QuoteSafe(string)
-	return UnityEngine.StringExtensions.QuoteSafe(string)
-end
-
 function PLUGIN:LoadDefaultConfig()
 	-- Set/load the default config options
 	self.Config.Settings = self.Config.Settings or {
@@ -88,8 +88,9 @@ function PLUGIN:LoadDefaultConfig()
 		-- Name to be used in plugin broadcasts
 		ChatName = "TRIVIA",
 		-- Auth level required to enable/disable plugin
-		-- 1 = Moderator
-		-- 2 = Owner
+		-- "0" = Anyone
+		-- "1" = Moderator
+		-- "2" = Owner
 		ToggleAuthLevel = "1",
 		-- Enable/disable use of the Jeopardy web API
 		EnableJeopardyAPI = "true",
@@ -109,6 +110,12 @@ function PLUGIN:LoadDefaultConfig()
 		Item = "Cooked Human Meat",
 		Amount = 1
 	}
+	-- Various messages used by the plugin
+	self.Config.Messages = self.Config.Messages or {
+		TriviaEnabled = "Trivia has been enabled.",
+		TriviaDisabled = "Trivia has been disabled.",
+		NoPermission = "You do not have permission for that command."
+	}
 	self:SaveConfig()
 end
 
@@ -126,15 +133,15 @@ function PLUGIN:AskQuestion()
 		-- Set the answer for the current question being asked
 		currentAnswer = self.Config.Answers[tostring(questionNumber)]
 		-- Broadcast the question
-		global.ConsoleSystem.Broadcast("chat.add \"" .. self.Config.Settings.ChatName .. "\" \"" .. self.Config.Questions[tostring(questionNumber)] .. "\"")
+		global.ConsoleSystem.Broadcast("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Questions[tostring(questionNumber)]))
 	-- If the question has not been answered and repeating
 	-- is enabled, ask the same question again
 	elseif answered ~= "true" and self.Config.Settings.doesQuestionRepeat == "true" then
 		-- If the question has been repeated less than the
 		-- configured number of times, ask it again.
 		-- Otherwise, ask a new question
-		if repeats <= self.Config.Settings.questionRepeats then
-			global.ConsoleSystem.Broadcast("chat.add \"" .. self.Config.Settings.ChatName .. "\" \"" .. self.Config.Questions[tostring(questionNumber)] .. "\"")
+		if repeats <= tonumber(self.Config.Settings.questionRepeats) then
+			global.ConsoleSystem.Broadcast("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Questions[tostring(questionNumber)]))
 		else
 			-- Ask a new question here
 		end
@@ -149,6 +156,26 @@ end
 function PLUGIN:cmdToggleTrivia(player, cmd, args)
 	-- Check player auth level, disable the plugin, and
 	-- destroy the timer
+	if player.net.connection.authLevel >= tonumber(self.Config.Settings.authLevel) then
+		if self.Config.Settings.enabled == "true" then
+			self.Config.Settings.enabled = "false"
+			self:SaveConfig()
+			if self.TriviaTimer then
+				self.TriviaTimer:Destroy()
+			end
+			player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.TriviaDisabled))
+		else
+			self.Config.Settings.enabled = "true"
+			self:SaveConfig()
+			self.TriviaTimer = {}
+			self.TriviaTimer = timer.Repeat (tonumber(self.Config.Settings.interval) , 0 , function() self:AskQuestion( ) end )
+			player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.TriviaEnabled))
+		end
+	else
+		-- Notify user that they do not have permission to
+		-- enable/disable the plugin
+		player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.NoPermission))
+	end
 end
 
 function PLUGIN:cmdCategories(player, cmd, args)
