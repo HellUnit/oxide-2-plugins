@@ -7,6 +7,7 @@ PLUGIN.ResourceId = 000
 PLUGIN.HasConfig = true
 
 local API = nil
+local notified = "false"
 
 -- Quotesafe function to help prevent unexpected output
 local function QuoteSafe(string)
@@ -23,15 +24,21 @@ function PLUGIN:Init()
 end
 
 function PLUGIN:OnServerIntialized()
-	if GetEconomyApi() then
-		API = GetEconomyApi()
+	pluginsList = plugins.GetAll()
+	for i = 0, tonumber(pluginsList.Length) - 1 do
+		if pluginsList[i].Object.Title:match("Economics") then  
+			API = GetEconomyAPI()
+		end
+	end
+	if API == nil then
+		print("Economics plugin not found. MoneyForGather plugin will not function!")
 	end
 end
 
 function PLUGIN:LoadDefaultConfig()
 	-- Set/load the default config options
 	self.Config.Settings = self.Config.Settings or {
-		ChatName = "MoneyForGather"
+		ChatName = "MoneyForGather",
 		PluginEnabled = "true",
 		WoodAmount = "100",
 		OreAmount = "100",
@@ -44,7 +51,8 @@ function PLUGIN:LoadDefaultConfig()
 		WoodAmountChanged = "The wood amount has been changed to ",
 		NoPermission = "You do not have permission for that command.",
 		PluginEnabled = "MoneyForGather has been enabled.",
-		PluginDisabled = "MoneyForGather has been disabled."
+		PluginDisabled = "MoneyForGather has been disabled.",
+		ReceivedMoney = "You have received "
 		-- GatherEnabled = "Gathering has been enabled.",
 		-- GatherDisabled = "Gathering has been disabled."
 	}
@@ -52,13 +60,29 @@ function PLUGIN:LoadDefaultConfig()
 end
 
 function PLUGIN:OnGather(dispenser, player, item)
-	if API and self.Config.Settings.PluginEnabled == "true" then
-		local userdata = API:GetUserDataFromPlayer(player)
-		if dispenser:GetType().Name == "TreeEntity" then
-			userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
-		else
-			userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+	if API ~= nil and self.Config.Settings.PluginEnabled == "true" then
+		player = player:ToPlayer()
+		if player then
+			userdata = API:GetUserDataFromPlayer(player)
+			if dispenser:GetComponentInParent(global.TreeEntity._type) then
+				userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
+				player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.ReceivedMoney .. self.Config.Settings.WoodAmount))
+			else
+				userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+				player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.ReceivedMoney .. self.Config.Settings.OreAmount))
+			end
 		end
+	elseif API == nil and notified == "false" then
+		pluginsList = plugins.GetAll()
+		for i = 0, tonumber(pluginsList.Length) - 1 do
+			if pluginsList[i].Object.Title:match("Economics") then  
+				API = GetEconomyAPI()
+			end
+		end
+		if API == nil then
+			print("Economics plugin not found. MoneyForGather plugin will not function!")
+		end
+		notified = "true"
 	end
 end
 
@@ -67,14 +91,14 @@ function PLUGIN:cmdSetAmount(player, cmd, args)
 		if args then
 			if cmd == "setforwood" then
 				self.Config.Settings.WoodAmount = tostring(args[0])
-				player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.WoodAmountChanged .. tostring(args[0])))
+				player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.WoodAmountChanged .. tostring(args[0])))
 			else
 				self.Config.Settings.OreAmount = tostring(args[0])
-				player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.OreAmountChanged .. tostring(args[0])))
+				player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.OreAmountChanged .. tostring(args[0])))
 			end
 		end
 	else
-		player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.NoPermission))
+		player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.NoPermission))
 	end
 end
 
@@ -87,13 +111,13 @@ function PLUGIN:cmdToggle(player, cmd, args)
 		if self.Config.Settings.Enabled == "true" then
 			self.Config.Settings.Enabled = "false"
 			self:SaveConfig()
-			player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.PluginDisabled))
+			player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.PluginDisabled))
 		else
 			self.Config.Settings.Enabled = "true"
 			self:SaveConfig()
-			player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.PluginEnabled))
+			player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.PluginEnabled))
 		end
 	else
-		player:SendConsoleCommand("chat.add " .. self:QuoteSafe(self.Config.Settings.ChatName) .. " " .. self:QuoteSafe(self.Config.Messages.NoPermission))
+		player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.NoPermission))
 	end
 end
