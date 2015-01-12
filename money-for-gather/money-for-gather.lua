@@ -58,7 +58,7 @@ function PLUGIN:LoadDefaultConfig()
 		NoPermission = "You do not have permission for that command.",
 		PluginStatusChanged = "MoneyForGather has been %s.",
 		ReceivedMoney = "You have received %s for gathering %s.",
-		GatherMessagesChanged = "MoneyForGather gather messages in chat have been %s."
+		GatherMessagesChanged = "MoneyForGather gather messages in chat have been %s.",
 		HelpText1 = "/setforwood <amount> - Sets the amount of money given for gathering wood",
 		HelpText2 = "/setforores <amount> - Sets the amount of money given for gathering ores",
 		HelpText3 = "/m4gtoggle - Toggles the MoneyForGather plugin on/off",
