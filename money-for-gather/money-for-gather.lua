@@ -21,9 +21,11 @@ function PLUGIN:Init()
 	command.AddChatCommand("setforores", self.Object, "cmdSetAmount")
 	-- command.AddChatCommand("gather", self.Object, "cmdGather")
 	command.AddChatCommand("m4gtoggle", self.Object, "cmdToggle")
+	command.AddChatCommand("m4gtogglechat", self.Object, "cmdToggleChat")
 	command.AddConsoleCommand("m4g.setforwood", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.setforores", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.toggle", self.Object, "ccmdM4G")
+	command.AddConsoleCommand("m4g.togglechat", self.Object, "ccmdM4G")
 end
 
 function PLUGIN:OnServerIntialized()
@@ -41,7 +43,7 @@ end
 function PLUGIN:LoadDefaultConfig()
 	-- Set/load the default config options
 	self.Config.Settings = self.Config.Settings or {
-		ChatName = "MoneyForGather",
+		ChatName = "[MoneyForGather]",
 		PluginEnabled = "true",
 		WoodAmount = "100",
 		OreAmount = "100",
@@ -54,12 +56,13 @@ function PLUGIN:LoadDefaultConfig()
 		OreAmountChanged = "The ore amount has been changed to %s",
 		WoodAmountChanged = "The wood amount has been changed to %s",
 		NoPermission = "You do not have permission for that command.",
-		PluginEnabled = "MoneyForGather has been enabled.",
-		PluginDisabled = "MoneyForGather has been disabled.",
+		PluginStatusChanged = "MoneyForGather has been %s.",
 		ReceivedMoney = "You have received %s for gathering %s.",
+		GatherMessagesChanged = "MoneyForGather gather messages in chat have been %s."
 		HelpText1 = "/setforwood <amount> - Sets the amount of money given for gathering wood",
 		HelpText2 = "/setforores <amount> - Sets the amount of money given for gathering ores",
-		HelpText3 = "/m4gtoggle - Toggles the MoneyForGather plugin on and off"
+		HelpText3 = "/m4gtoggle - Toggles the MoneyForGather plugin on/off",
+		HelpText4 = "/m4gtogglechat - Toggles the MoneyForGather gather messages in chat on/off"
 		-- GatherEnabled = "Gathering has been enabled.",
 		-- GatherDisabled = "Gathering has been disabled."
 	}
@@ -130,11 +133,27 @@ function PLUGIN:cmdToggle(player, cmd, args)
 		if self.Config.Settings.PluginEnabled == "true" then
 			self.Config.Settings.PluginEnabled = "false"
 			self:SaveConfig()
-			self:SendMessage(player, self.Config.Messages.PluginDisabled)
+			self:SendMessage(player, self.Config.Messages.PluginStatusChanged:format("disabled"))
 		else
 			self.Config.Settings.PluginEnabled = "true"
 			self:SaveConfig()
-			self:SendMessage(player, self.Config.Messages.PluginEnabled)
+			self:SendMessage(player, self.Config.Messages.PluginStatusChanged:format("enabled"))
+		end
+	else
+		self:SendMessage(player, self.Config.Messages.NoPermission)
+	end
+end
+
+function PLUGIN:cmdToggleChat(player, cmd, args)
+	if player.net.connection.authLevel >= tonumber(self.Config.Settings.AuthLevel) then
+		if self.Config.Settings.GatherMessagesEnabled == "true" then
+			self.Config.Settings.GatherMessagesEnabled = "false"
+			self:SaveConfig()
+			self:SendMessage(player, self.Config.Messages.GatherMessagesChanged:format("disabled"))
+		else
+			self.Config.Settings.GatherMessagesEnabled = "true"
+			self:SaveConfig()
+			self:SendMessage(player, self.Config.Messages.GatherMessagesChanged:format("enabled"))
 		end
 	else
 		self:SendMessage(player, self.Config.Messages.NoPermission)
@@ -169,6 +188,16 @@ function PLUGIN:ccmdM4G(arg)
 			self:SaveConfig()
 			arg:ReplyWith(self.Config.Messages.PluginEnabled)
 		end
+	elseif command == "m4g.togglechat" then
+		if self.Config.Settings.GatherMessagesEnabled== "true" then
+			self.Config.Settings.GatherMessagesEnabled = "false"
+			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.GatherMessagesChanged:format("disabled"))
+		else
+			self.Config.Settings.GatherMessagesEnabled= "true"
+			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.GatherMessagesChanged:format("enabled"))
+		end
 	end
 	return
 end
@@ -178,6 +207,7 @@ function PLUGIN:SendHelpText(player)
 		self:SendMessage(player, self.Config.Messages.HelpText1)
 		self:SendMessage(player, self.Config.Messages.HelpText2)
 		self:SendMessage(player, self.Config.Messages.HelpText3)
+		self:SendMessage(player, self.Config.Messages.HelpText4)
 	end
 end
 
