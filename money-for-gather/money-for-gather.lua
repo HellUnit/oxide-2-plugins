@@ -143,6 +143,7 @@ function PLUGIN:ccmdM4G(arg)
 		elseif arg.Args[0] then
 			self.Config.Settings.WoodAmount = tostring(arg.Args[0])
 			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.WoodAmountChanged:format(tostring(arg.Args[0])))
 		end
 	elseif command == "m4g.setforores" then
 		if not arg.Args or arg.Args.Length == 0 then
@@ -150,6 +151,7 @@ function PLUGIN:ccmdM4G(arg)
 		elseif arg.Args[0] then
 			self.Config.Settings.OreAmount = tostring(arg.Args[0])
 			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.OreAmountChanged:format(tostring(arg.Args[0])))
 		end
 	elseif command == "m4g.toggle" then
 		if self.Config.Settings.PluginEnabled == "true" then
