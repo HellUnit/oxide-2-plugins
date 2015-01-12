@@ -1,5 +1,5 @@
 PLUGIN.Title = "MoneyForGather"
-PLUGIN.Version = V(0, 0, 4)
+PLUGIN.Version = V(0, 0, 5)
 PLUGIN.Description = "Gain money through the Economics API for gathering"
 PLUGIN.Author = "Mr. Bubbles AKA BlazR"
 PLUGIN.Url = "http://forum.rustoxide.com/plugins/money-for-gather.770/"
@@ -99,7 +99,7 @@ end
 
 function PLUGIN:cmdSetAmount(player, cmd, args)
 	if player.net.connection.authLevel >= tonumber(self.Config.Settings.AuthLevel) then
-		if args then
+		if args.Length > 0 then
 			if cmd == "setforwood" then
 				self.Config.Settings.WoodAmount = tostring(args[0])
 				self:SaveConfig()
@@ -108,6 +108,12 @@ function PLUGIN:cmdSetAmount(player, cmd, args)
 				self.Config.Settings.OreAmount = tostring(args[0])
 				self:SaveConfig()
 				self:SendMessage(player, self.Config.Messages.OreAmountChanged:format(tostring(args[0])))
+			end
+		else
+			if cmd == "setforwood" then
+				self:SendMessage(player, self.Config.Messages.HelpText1)
+			else
+				self:SendMessage(player, self.Config.Messages.HelpText2)
 			end
 		end
 	else
