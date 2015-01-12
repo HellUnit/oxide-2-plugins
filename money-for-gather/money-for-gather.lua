@@ -1,5 +1,5 @@
 PLUGIN.Title = "MoneyForGather"
-PLUGIN.Version = V(0, 0, 1)
+PLUGIN.Version = V(0, 0, 2)
 PLUGIN.Description = "Gain money through the Economics API for gathering"
 PLUGIN.Author = "Mr. Bubbles AKA BlazR"
 PLUGIN.Url = "http://forum.rustoxide.com/plugins/money-for-gather.770/"
@@ -21,6 +21,9 @@ function PLUGIN:Init()
 	command.AddChatCommand("setforores", self.Object, "cmdSetAmount")
 	-- command.AddChatCommand("gather", self.Object, "cmdGather")
 	command.AddChatCommand("m4gtoggle", self.Object, "cmdToggle")
+	command.AddConsoleCommand("m4g.setforwood", self.Object, "ccmdM4G")
+	command.AddConsoleCommand("m4g.setforores", self.Object, "ccmdM4G")
+	command.AddConsoleCommand("m4g.toggle", self.Object, "ccmdM4G")
 end
 
 function PLUGIN:OnServerIntialized()
@@ -53,7 +56,10 @@ function PLUGIN:LoadDefaultConfig()
 		NoPermission = "You do not have permission for that command.",
 		PluginEnabled = "MoneyForGather has been enabled.",
 		PluginDisabled = "MoneyForGather has been disabled.",
-		ReceivedMoney = "You have received %s for gathering %s."
+		ReceivedMoney = "You have received %s for gathering %s.",
+		HelpText1 = "/setforwood <amount> - Sets the amount of money given for gathering wood",
+		HelpText2 = "/setforores <amount> - Sets the amount of money given for gathering ores",
+		HelpText3 = "/m4gtoggle - Toggles the MoneyForGather plugin on and off"
 		-- GatherEnabled = "Gathering has been enabled.",
 		-- GatherDisabled = "Gathering has been disabled."
 	}
@@ -68,12 +74,12 @@ function PLUGIN:OnGather(dispenser, player, item)
 			if dispenser:GetComponentInParent(global.TreeEntity._type) then
 				userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
 				if self.Config.Settings.GatherMessagesEnabled == "true" then
-					player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.ReceivedMoney:format(self.Config.Settings.WoodAmount, item.info.displayname)))
+					self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.WoodAmount, item.info.displayname))
 				end
 			elseif item.info.displayname == "Metal Ore" or item.info.displayname == "Sulfur Ore" then
 				userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
 				if self.Config.Settings.GatherMessagesEnabled == "true" then
-					player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, item.info.displayname)))
+					self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, item.info.displayname))
 				end
 			end
 		end
@@ -97,15 +103,15 @@ function PLUGIN:cmdSetAmount(player, cmd, args)
 			if cmd == "setforwood" then
 				self.Config.Settings.WoodAmount = tostring(args[0])
 				self:SaveConfig()
-				player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.WoodAmountChanged:format(tostring(args[0]))))
+				self:SendMessage(player, self.Config.Messages.WoodAmountChanged:format(tostring(args[0])))
 			else
 				self.Config.Settings.OreAmount = tostring(args[0])
 				self:SaveConfig()
-				player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.OreAmountChanged:format(tostring(args[0]))))
+				self:SendMessage(player, self.Config.Messages.OreAmountChanged:format(tostring(args[0])))
 			end
 		end
 	else
-		player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.NoPermission))
+		self:SendMessage(player, self.Config.Messages.NoPermission)
 	end
 end
 
@@ -118,13 +124,55 @@ function PLUGIN:cmdToggle(player, cmd, args)
 		if self.Config.Settings.PluginEnabled == "true" then
 			self.Config.Settings.PluginEnabled = "false"
 			self:SaveConfig()
-			player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.PluginDisabled))
+			self:SendMessage(player, self.Config.Messages.PluginDisabled)
 		else
 			self.Config.Settings.PluginEnabled = "true"
 			self:SaveConfig()
-			player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.PluginEnabled))
+			self:SendMessage(player, self.Config.Messages.PluginEnabled)
 		end
 	else
-		player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(self.Config.Messages.NoPermission))
+		self:SendMessage(player, self.Config.Messages.NoPermission))
 	end
+end
+
+function PLUGIN:ccmdM4G(arg)
+	command = arg.cmd.namefull
+	if command == "m4g.setforwood" then
+		if not arg.Args or arg.Args.Length == 0 then
+			arg:ReplyWith("You must specify an amount. 'm4g.setforwood <amount>'")
+		elseif arg.Args[0] then
+			self.Config.Settings.WoodAmount = tostring(arg.Args[0])
+			self:SaveConfig()
+		end
+	elseif command == "m4g.setforores" then
+		if not arg.Args or arg.Args.Length == 0 then
+			arg:ReplyWith("You must specify an amount. 'm4g.setforores <amount>'")
+		elseif arg.Args[0] then
+			self.Config.Settings.OreAmount = tostring(arg.Args[0])
+			self:SaveConfig()
+		end
+	elseif command == "m4g.toggle" then
+		if self.Config.Settings.PluginEnabled == "true" then
+			self.Config.Settings.PluginEnabled = "false"
+			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.PluginDisabled)
+		else
+			self.Config.Settings.PluginEnabled = "true"
+			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.PluginEnabled)
+		end
+	end
+	return
+end
+
+function PLUGIN:SendHelpText(player)
+	if player.net.connection.authLevel >= tonumber(self.Config.Settings.AuthLevel) then
+		self:SendMessage(player, self.Config.Messages.HelpText1)
+		self:SendMessage(player, self.Config.Messages.HelpText2)
+		self:SendMessage(player, self.Config.Messages.HelpText3)
+	end
+end
+
+function PLUGIN:SendMessage(player, message)
+	player:SendConsoleCommand("chat.add " .. QuoteSafe(self.Config.Settings.ChatName) .. " " .. QuoteSafe(message))
 end
