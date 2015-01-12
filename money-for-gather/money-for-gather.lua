@@ -1,5 +1,5 @@
 PLUGIN.Title = "MoneyForGather"
-PLUGIN.Version = V(0, 0, 3)
+PLUGIN.Version = V(0, 0, 4)
 PLUGIN.Description = "Gain money through the Economics API for gathering"
 PLUGIN.Author = "Mr. Bubbles AKA BlazR"
 PLUGIN.Url = "http://forum.rustoxide.com/plugins/money-for-gather.770/"
@@ -131,7 +131,7 @@ function PLUGIN:cmdToggle(player, cmd, args)
 			self:SendMessage(player, self.Config.Messages.PluginEnabled)
 		end
 	else
-		self:SendMessage(player, self.Config.Messages.NoPermission))
+		self:SendMessage(player, self.Config.Messages.NoPermission)
 	end
 end
 
