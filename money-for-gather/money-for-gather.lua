@@ -1,5 +1,5 @@
 PLUGIN.Title = "MoneyForGather"
-PLUGIN.Version = V(0, 0, 5)
+PLUGIN.Version = V(1, 0, 0)
 PLUGIN.Description = "Gain money through the Economics API for gathering"
 PLUGIN.Author = "Mr. Bubbles AKA BlazR"
 PLUGIN.Url = "http://forum.rustoxide.com/plugins/money-for-gather.770/"
