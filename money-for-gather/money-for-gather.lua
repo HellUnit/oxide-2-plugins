@@ -104,7 +104,7 @@ function PLUGIN:OnGather(dispenser, player, item)
 						self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, item.info.displayname))
 					end
 				end
-			else if -- Add condition for ResourceDispenser == corpse here -- and self.Config.Settings.MoneyForCorpsesEnabled == "true" then
+			elseif dispenser:ToString():match("corpse") and self.Config.Settings.MoneyForCorpsesEnabled == "true" then
 				userdata:Deposit(tonumber(self.Config.Settings.CorpseAmount))
 				if self.Config.Settings.GatherMessagesEnabled == "true" then
 					self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.CorpseAmount, "from a corpse"))
@@ -132,7 +132,7 @@ function PLUGIN:cmdSetAmount(player, cmd, args)
 				self.Config.Settings.WoodAmount = tostring(args[0])
 				self:SaveConfig()
 				self:SendMessage(player, self.Config.Messages.AmountChanged:format("Wood", tostring(args[0])))
-			elseif cmd == "setforores"
+			elseif cmd == "setforores" then
 				self.Config.Settings.OreAmount = tostring(args[0])
 				self:SaveConfig()
 				self:SendMessage(player, self.Config.Messages.AmountChanged:format("Ores", tostring(args[0])))
@@ -144,7 +144,7 @@ function PLUGIN:cmdSetAmount(player, cmd, args)
 		else
 			if cmd == "setforwood" then
 				self:SendMessage(player, self.Config.Messages.HelpText1)
-			elseif cmd == "setforores"
+			elseif cmd == "setforores" then
 				self:SendMessage(player, self.Config.Messages.HelpText2)
 			else
 				self:SendMessage(player, self.Config.Messages.HelpText3)
