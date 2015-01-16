@@ -1,5 +1,5 @@
 PLUGIN.Title = "MoneyForGather"
-PLUGIN.Version = V(1, 1, 0)
+PLUGIN.Version = V(1, 2, 0)
 PLUGIN.Description = "Gain money through the Economics API for gathering"
 PLUGIN.Author = "Mr. Bubbles AKA BlazR"
 PLUGIN.Url = "http://forum.rustoxide.com/plugins/money-for-gather.770/"
@@ -20,21 +20,25 @@ function PLUGIN:Init()
 	command.AddChatCommand("setforwood", self.Object, "cmdSetAmount")
 	command.AddChatCommand("setforores", self.Object, "cmdSetAmount")
 	command.AddChatCommand("setforcorpses", self.Object, "cmdSetAmount")
+	command.AddChatCommand("setforanimal", self.Object, "cmdSetAmount")
 	-- command.AddChatCommand("gather", self.Object, "cmdGather")
 	command.AddChatCommand("m4gtoggle", self.Object, "cmdToggle")
 	command.AddChatCommand("m4gtogglechat", self.Object, "cmdToggleChat")
 	command.AddChatCommand("m4gtogglewood", self.Object, "cmdToggleWood")
 	command.AddChatCommand("m4gtoggleores", self.Object, "cmdToggleOres")
 	command.AddChatCommand("m4gtogglecorpses", self.Object, "cmdToggleCorpses")
+	command.AddChatCommand("m4gtoggleanimals", self.Object, "cmdToggleAnimals")
 	command.AddChatCommand("m4ghelp", self.Object, "cmdHelp")
 	command.AddConsoleCommand("m4g.setforwood", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.setforores", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.setforcorpses", self.Object, "ccmdM4G")
+	command.AddConsoleCommand("m4g.setforanimal", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.toggle", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.togglechat", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.togglewood", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.toggleores", self.Object, "ccmdM4G")
 	command.AddConsoleCommand("m4g.togglecorpses", self.Object, "ccmdM4G")
+	command.AddConsoleCommand("m4g.toggleanimals", self.Object, "ccmdM4G")
 end
 
 function PLUGIN:OnServerIntialized()
@@ -62,6 +66,12 @@ function PLUGIN:LoadDefaultConfig()
 		MoneyForWoodEnabled = "true",
 		MoneyForOresEnabled = "true",
 		MoneyForCorpsesEnabled = "false",
+		MoneyForAnimalKillsEnabled = "true",
+		BearKillAmount = "200",
+		WolfKillAmount = "100",
+		StagKillAmount = "75",
+		BoarKillAmount = "50",
+		ChickenKillAmount = "25",
 		AuthLevel = "1"
 	}
 	-- Various messages used by the plugin
@@ -72,15 +82,19 @@ function PLUGIN:LoadDefaultConfig()
 		ReceivedMoney = "You have received %s for gathering %s.",
 		GatherMessagesChanged = "MoneyForGather gather messages in chat have been %s.",
 		MoneyOnGatherStateChanged = "Money for gathering %s has been %s.",
+		OnAnimalKill = "You have received %s for killing a %s.",
 		HelpText = "Use /m4ghelp to get a list of MoneyForGather commands.",
 		HelpText1 = "/setforwood <amount> - Sets the amount of money given for gathering wood",
 		HelpText2 = "/setforores <amount> - Sets the amount of money given for gathering ores",
 		HelpText3 = "/setforcorpses <amount> - Sets the amount of money given for gathering from corpses",
-		HelpText4 = "/m4gtoggle - Toggles the MoneyForGather plugin on/off",
-		HelpText5 = "/m4gtogglechat - Toggles the MoneyForGather gather messages in chat on/off",
-		HelpText6 = "/m4gtogglewood - Toggles getting money for gathering wood on/off",
-		HelpText7 = "/m4gtoggleores - Toggles getting money for gathering ores on/off",
-		HelpText8 = "/m4gtogglecorpses - Toggles getting money for gathering corpses on/off"
+		HelpText4 = "/setforanimal <animal> <amount> - Sets the amount of money given for killing a particular animal",
+		HelpText5 = "/m4gtoggle - Toggles the MoneyForGather plugin on/off",
+		HelpText6 = "/m4gtogglechat - Toggles the MoneyForGather gather messages in chat on/off",
+		HelpText7 = "/m4gtogglewood - Toggles getting money for gathering wood on/off",
+		HelpText8 = "/m4gtoggleores - Toggles getting money for gathering ores on/off",
+		HelpText9 = "/m4gtogglecorpses - Toggles getting money for gathering corpses on/off",
+		HelpText10 = "/m4gtoggleanimals - Toggles getting money for killing animlas",
+		InvalidAnimal = "You have specified an invalid animal type. Valid types are bear, wolf, stag, boar, and chicken."
 		-- GatherEnabled = "Gathering has been enabled.",
 		-- GatherDisabled = "Gathering has been disabled."
 	}
@@ -111,7 +125,57 @@ function PLUGIN:OnGather(dispenser, player, item)
 				end
 			end
 		end
-	elseif API == nil and notified == "false" then
+	elseif API == nil and notified == "false" and self.Config.Settings.PluginEnabled == "true" then
+		pluginsList = plugins.GetAll()
+		for i = 0, tonumber(pluginsList.Length) - 1 do
+			if pluginsList[i].Object.Title:match("Economics") then  
+				API = GetEconomyAPI()
+			end
+		end
+		if API == nil then
+			print("Economics plugin not found. MoneyForGather plugin will not function!")
+			notified = "true"
+		end
+	end
+end
+
+function PLUGIN:OnEntityDeath(entity, hitinfo)	
+	if API ~= nil and self.Config.Settings.MoneyForAnimalKillsEnabled == "true" and self.Config.Settings.PluginEnabled == "true" then
+		if(entity:GetComponent("BaseNPC")) then
+			if(hitinfo.Initiator:ToPlayer()) then
+				player = hitinfo.Initiator:ToPlayer()
+				userdata = API:GetUserDataFromPlayer(player)
+				animal = entity.corpseEntity
+				print("Animal: " .. animal)
+				if animal:lower():match("bear") then
+					userdata:Deposit(tonumber(self.Config.Settings.BearKillAmount))
+					if self.Config.Settings.GatherMessagesEnabled == "true" then
+						self:SendMessage(player, self.Config.Messages.OnAnimalKill:format(self.Config.Settings.BearKillAmount, "bear"))
+					end
+				elseif animal:lower():match("wolf") then
+					userdata:Deposit(tonumber(self.Config.Settings.WolfKillAmount))
+					if self.Config.Settings.GatherMessagesEnabled == "true" then
+						self:SendMessage(player, self.Config.Messages.OnAnimalKill:format(self.Config.Settings.WolfKillAmount, "wolf"))
+					end
+				elseif animal:lower():match("stag") then
+					userdata:Deposit(tonumber(self.Config.Settings.StagKillAmount))
+					if self.Config.Settings.GatherMessagesEnabled == "true" then
+						self:SendMessage(player, self.Config.Messages.OnAnimalKill:format(self.Config.Settings.StagKillAmount, "stag"))
+					end
+				elseif animal:lower():match("boar") then
+					userdata:Deposit(tonumber(self.Config.Settings.BoarKillAmount))
+					if self.Config.Settings.GatherMessagesEnabled == "true" then
+						self:SendMessage(player, self.Config.Messages.OnAnimalKill:format(self.Config.Settings.BoarKillAmount, "boar"))
+					end
+				elseif animal:lower():match("chicken") then
+					userdata:Deposit(tonumber(self.Config.Settings.ChickenKillAmount))
+					if self.Config.Settings.GatherMessagesEnabled == "true" then
+						self:SendMessage(player, self.Config.Messages.OnAnimalKill:format(self.Config.Settings.ChickenKillAmount, "chicken"))
+					end
+				end
+			end
+		end
+	elseif API == nil and notified == "false" and self.Config.Settings.PluginEnabled == "true"then
 		pluginsList = plugins.GetAll()
 		for i = 0, tonumber(pluginsList.Length) - 1 do
 			if pluginsList[i].Object.Title:match("Economics") then  
@@ -136,18 +200,49 @@ function PLUGIN:cmdSetAmount(player, cmd, args)
 				self.Config.Settings.OreAmount = tostring(args[0])
 				self:SaveConfig()
 				self:SendMessage(player, self.Config.Messages.AmountChanged:format("Ores", tostring(args[0])))
-			else
+			elseif cmd == "setforcorpses" then
 				self.Config.Settings.CorpseAmount = tostring(args[0])
 				self:SaveConfig()
 				self:SendMessage(player, self.Config.Messages.AmountChanged:format("corpses", tostring(args[0])))
+			elseif cmd == "setforanimal" then
+				self:SendMessage(player, self.Config.Messages.HelpText4)
+			end
+		elseif args.Length == 2 then
+			if cmd == "setforwood" then
+				self:SendMessage(player, self.Config.Messages.HelpText1)
+			elseif cmd == "setforores" then
+				self:SendMessage(player, self.Config.Messages.HelpText2)
+			elseif cmd == "setforcorpses" then
+				self:SendMessage(player, self.Config.Messages.HelpText3)
+			elseif cmd == "setforanimal" then
+				if args[0]:lower() == "bear" then
+					self.Config.Settings.BearKillAmount = tostring(args[1])
+					self:SendMessage(player, self.Config.Messages.AmountChanged:format("bears", tostring(args[1])))
+				elseif args[0]:lower() == "wolf" then
+					self.Config.Settings.WolfKillAmount = tostring(args[1])
+					self:SendMessage(player, self.Config.Messages.AmountChanged:format("wolves", tostring(args[1])))
+				elseif args[0]:lower() == "stag" then
+					self.Config.Settings.StagKillAmount = tostring(args[1])
+					self:SendMessage(player, self.Config.Messages.AmountChanged:format("stags", tostring(args[1])))
+				elseif args[0]:lower() == "boar" then
+					self.Config.Settings.BoarKillAmount = tostring(args[1])
+					self:SendMessage(player, self.Config.Messages.AmountChanged:format("boars", tostring(args[1])))
+				elseif args[0]:lower() == "chicken" then
+					self.Config.Settings.ChickenKillAmount = tostring(args[1])
+					self:SendMessage(player, self.Config.Messages.AmountChanged:format("chickens", tostring(args[1])))
+				else
+					self:SendMessage(player, self.Config.Messages.InvalidAnimal)
+				end
 			end
 		else
 			if cmd == "setforwood" then
 				self:SendMessage(player, self.Config.Messages.HelpText1)
 			elseif cmd == "setforores" then
 				self:SendMessage(player, self.Config.Messages.HelpText2)
-			else
+			elseif cmd == "setforcorpses" then
 				self:SendMessage(player, self.Config.Messages.HelpText3)
+			elseif cmd == "setforanimal" then
+				self:SendMessage(player, self.Config.Messages.HelpText4)
 			end
 		end
 	else
@@ -239,6 +334,22 @@ function PLUGIN:cmdToggleCorpses(player, cmd, args)
 	end
 end
 
+function PLUGIN:cmdToggleAnimals(player, cmd, args)
+	if player.net.connection.authLevel >= tonumber(self.Config.Settings.AuthLevel) then
+		if self.Config.Settings.MoneyForAnimalKillsEnabled  == "true" then
+			self.Config.Settings.MoneyForAnimalKillsEnabled  = "false"
+			self:SaveConfig()
+			self:SendMessage(player, self.Config.Messages.MoneyOnGatherStateChanged:format("animal kills", "disabled"))
+		else
+			self.Config.Settings.MoneyForAnimalKillsEnabled  = "true"
+			self:SaveConfig()
+			self:SendMessage(player, self.Config.Messages.MoneyOnGatherStateChanged:format("animal kills", "enabled"))
+		end
+	else
+		self:SendMessage(player, self.Config.Messages.NoPermission)
+	end
+end
+
 function PLUGIN:cmdHelp(player, cmd, args)
 	if player.net.connection.authLevel >= tonumber(self.Config.Settings.AuthLevel) then
 		self:SendMessage(player, self.Config.Messages.HelpText1)
@@ -279,6 +390,30 @@ function PLUGIN:ccmdM4G(arg)
 			self.Config.Settings.CorpseAmount = tostring(arg.Args[0])
 			self:SaveConfig()
 			arg:ReplyWith(self.Config.Messages.AmountChanged:format("corpses", tostring(arg.Args[0])))
+		end
+	elseif command == "m4g.setforanimal" then
+		if not arg.Args or arg.Args.Length ~= 2 then
+			arg:ReplyWith("You must specify an animal type and amount. 'm4g.setforanimals <animal> <amount>'")
+		elseif arg.Args[0] and arg.Args[1] then
+			if arg.Args[0]:lower() == "bear" then
+					self.Config.Settings.BearKillAmount = tostring(arg.Args[1])
+					arg:ReplyWith(self.Config.Messages.AmountChanged:format("bears", tostring(arg.Args[1])))
+				elseif arg.Args[0]:lower() == "wolf" then
+					self.Config.Settings.WolfKillAmount = tostring(arg.Args[1])
+					arg:ReplyWith(self.Config.Messages.AmountChanged:format("wolves", tostring(arg.Args[1])))
+				elseif arg.Args[0]:lower() == "stag" then
+					self.Config.Settings.StagKillAmount = tostring(arg.Args[1])
+					arg:ReplyWith(self.Config.Messages.AmountChanged:format("stags", tostring(arg.Args[1])))
+				elseif arg.Args[0]:lower() == "boar" then
+					self.Config.Settings.BoarKillAmount = tostring(arg.Args[1])
+					arg:ReplyWith(self.Config.Messages.AmountChanged:format("boars", tostring(arg.Args[1])))
+				elseif arg.Args[0]:lower() == "chicken" then
+					self.Config.Settings.ChickenKillAmount = tostring(arg.Args[1])
+					arg:ReplyWith(self.Config.Messages.AmountChanged:format("chickens", tostring(arg.Args[1])))
+				else
+					arg:ReplyWith(self.Config.Messages.InvalidAnimal)
+				end
+			self:SaveConfig()
 		end
 	elseif command == "m4g.toggle" then
 		if self.Config.Settings.PluginEnabled == "true" then
@@ -326,9 +461,19 @@ function PLUGIN:ccmdM4G(arg)
 			self:SaveConfig()
 			arg:ReplyWith(self.Config.Messages.MoneyOnGatherStateChanged:format("corpses", "disabled"))
 		else
-			self.Config.Settings.MoneyForCorpsesEnabled = "true"
+			self.Config.Settings.CorpsesEnabled = "true"
 			self:SaveConfig()
 			arg:ReplyWith(self.Config.Messages.MoneyOnGatherStateChanged:format("corpses", "enabled"))
+		end
+	elseif command == "m4g.toggleanimals" then
+		if self.Config.Settings.MoneyForAnimalKillsEnabled == "true" then
+			self.Config.Settings.MoneyForAnimalKillsEnabled = "false"
+			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.MoneyOnGatherStateChanged:format("animal kills", "disabled"))
+		else
+			self.Config.Settings.MoneyForAnimalKillsEnabled = "true"
+			self:SaveConfig()
+			arg:ReplyWith(self.Config.Messages.MoneyOnGatherStateChanged:format("animal kills", "enabled"))
 		end
 	end
 	return
