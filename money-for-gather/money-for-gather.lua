@@ -1,5 +1,5 @@
 PLUGIN.Title = "MoneyForGather"
-PLUGIN.Version = V(1, 2, 0)
+PLUGIN.Version = V(1, 2, 1)
 PLUGIN.Description = "Gain money through the Economics API for gathering"
 PLUGIN.Author = "Mr. Bubbles AKA BlazR"
 PLUGIN.Url = "http://forum.rustoxide.com/plugins/money-for-gather.770/"
@@ -76,13 +76,13 @@ function PLUGIN:LoadDefaultConfig()
 	}
 	-- Various messages used by the plugin
 	self.Config.Messages = self.Config.Messages or {
-		AmountChanged = "The %s amount has been changed to %s",
+		AmountChanged = "The %s amount has been changed to $%s",
 		NoPermission = "You do not have permission for that command.",
 		PluginStatusChanged = "MoneyForGather has been %s.",
-		ReceivedMoney = "You have received %s for gathering %s.",
+		ReceivedMoney = "You have received $%s for gathering %s.",
 		GatherMessagesChanged = "MoneyForGather gather messages in chat have been %s.",
 		MoneyOnGatherStateChanged = "Money for gathering %s has been %s.",
-		OnAnimalKill = "You have received %s for killing a %s.",
+		OnAnimalKill = "You have received $%s for killing a %s.",
 		HelpText = "Use /m4ghelp to get a list of MoneyForGather commands.",
 		HelpText1 = "/setforwood <amount> - Sets the amount of money given for gathering wood",
 		HelpText2 = "/setforores <amount> - Sets the amount of money given for gathering ores",
@@ -107,15 +107,71 @@ function PLUGIN:OnGather(dispenser, player, item)
 		if player then
 			userdata = API:GetUserDataFromPlayer(player)
 			if dispenser:GetComponentInParent(global.TreeEntity._type) and self.Config.Settings.MoneyForWoodEnabled == "true" then
-				userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
-				if self.Config.Settings.GatherMessagesEnabled == "true" then
-					self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.WoodAmount, item.info.displayname))
+				remaining = dispenser.fractionRemaining
+				if remaining <= .03999999910594 and remaining >= .03999999910592 then
+					userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
+						if self.Config.Settings.GatherMessagesEnabled == "true" then
+							self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.WoodAmount, item.info.displayname))
+						end
+				elseif remaining <= .066666670143605 and remaining >= .066666670143603 then
+					userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
+						if self.Config.Settings.GatherMessagesEnabled == "true" then
+							self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.WoodAmount, item.info.displayname))
+						end
+				elseif remaining <= .099999986588956 and remaining >= .099999986588954 then
+					userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
+						if self.Config.Settings.GatherMessagesEnabled == "true" then
+							self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.WoodAmount, item.info.displayname))
+						end
+				elseif remaining <= .03999999538065 and remaining >= .03999999538063 then
+					userdata:Deposit(tonumber(self.Config.Settings.WoodAmount))
+						if self.Config.Settings.GatherMessagesEnabled == "true" then
+							self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.WoodAmount, item.info.displayname))
+						end
 				end
-			elseif item.info.displayname == "Metal Ore" or item.info.displayname == "Sulfur Ore" then
+			elseif item.info.displayname == "Stones" then
+				remaining = dispenser.fractionRemaining
 				if self.Config.Settings.MoneyForOresEnabled == "true" then
-					userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
-					if self.Config.Settings.GatherMessagesEnabled == "true" then
-						self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, item.info.displayname))
+					if remaining <= .0016633472405375 and remaining >= .0016633472405373 then		--stone
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
+					elseif remaining <= .00499999942259 and remaining >= .00499999942257 then		--stone hatchet
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
+					elseif remaining <= .012499999254943 and remaining >= .012499999254941 then		--hatchet:stones and metal ore
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
+					elseif remaining <= .0066658249124886 and remaining >= .0066658249124884 then		--salvage hammer
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
+					elseif remaining <= .0083331605419518 and remaining >= .0083331605419516 then		--salvage ax:stones and sulfur ore
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
+					elseif remaining <= .012499998323620 and remaining >= .012499998323618 then		--hatchet:sulfur ore
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
+					elseif remaining <= .00999999884517 and remaining >= .00999999884515 then		--salvage pick
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
+					elseif remaining <= .0083331000059844 and remaining >= .0083331000059842 then		--salvage ax:metal ore
+						userdata:Deposit(tonumber(self.Config.Settings.OreAmount))
+							if self.Config.Settings.GatherMessagesEnabled == "true" then
+								self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.OreAmount, "Ore"))
+							end
 					end
 				end
 			elseif dispenser:ToString():match("corpse") and self.Config.Settings.MoneyForCorpsesEnabled == "true" then
