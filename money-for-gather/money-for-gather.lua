@@ -88,12 +88,13 @@ function PLUGIN:LoadDefaultConfig()
 		HelpText2 = "/setforores <amount> - Sets the amount of money given for gathering ores",
 		HelpText3 = "/setforcorpses <amount> - Sets the amount of money given for gathering from corpses",
 		HelpText4 = "/setforanimal <animal> <amount> - Sets the amount of money given for killing a particular animal",
-		HelpText5 = "/m4gtoggle - Toggles the MoneyForGather plugin on/off",
-		HelpText6 = "/m4gtogglechat - Toggles the MoneyForGather gather messages in chat on/off",
-		HelpText7 = "/m4gtogglewood - Toggles getting money for gathering wood on/off",
-		HelpText8 = "/m4gtoggleores - Toggles getting money for gathering ores on/off",
-		HelpText9 = "/m4gtogglecorpses - Toggles getting money for gathering corpses on/off",
-		HelpText10 = "/m4gtoggleanimals - Toggles getting money for killing animlas",
+		HelpText5 = "Valid animal types are bear, wolf, stag, boar, and chicken.",
+		HelpText6 = "/m4gtoggle - Toggles the MoneyForGather plugin on/off",
+		HelpText7 = "/m4gtogglechat - Toggles the MoneyForGather gather messages in chat on/off",
+		HelpText8 = "/m4gtogglewood - Toggles getting money for gathering wood on/off",
+		HelpText9 = "/m4gtoggleores - Toggles getting money for gathering ores on/off",
+		HelpText10 = "/m4gtogglecorpses - Toggles getting money for gathering corpses on/off",
+		HelpText11 = "/m4gtoggleanimals - Toggles getting money for killing animlas",
 		InvalidAnimal = "You have specified an invalid animal type. Valid types are bear, wolf, stag, boar, and chicken."
 		-- GatherEnabled = "Gathering has been enabled.",
 		-- GatherDisabled = "Gathering has been disabled."
@@ -175,7 +176,9 @@ function PLUGIN:OnGather(dispenser, player, item)
 					end
 				end
 			elseif dispenser:ToString():match("corpse") and self.Config.Settings.MoneyForCorpsesEnabled == "true" then
+				remaining = dispenser.fractionRemaining
 				userdata:Deposit(tonumber(self.Config.Settings.CorpseAmount))
+				self:SendMessage(player, "Dispenser Amount Remaining: " .. tostring(remaining))
 				if self.Config.Settings.GatherMessagesEnabled == "true" then
 					self:SendMessage(player, self.Config.Messages.ReceivedMoney:format(self.Config.Settings.CorpseAmount, "from a corpse"))
 				end
@@ -416,6 +419,9 @@ function PLUGIN:cmdHelp(player, cmd, args)
 		self:SendMessage(player, self.Config.Messages.HelpText6)
 		self:SendMessage(player, self.Config.Messages.HelpText7)
 		self:SendMessage(player, self.Config.Messages.HelpText8)
+		self:SendMessage(player, self.Config.Messages.HelpText9)
+		self:SendMessage(player, self.Config.Messages.HelpText10)
+		self:SendMessage(player, self.Config.Messages.HelpText11)
 	else
 		self:SendMessage(player, self.Config.Messages.NoPermission)
 	end
